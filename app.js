@@ -24,13 +24,15 @@ document.addEventListener('DOMContentLoaded', ()=>{
         squares[currentShooterIndex].classList.remove('shooter')
         switch(e.keyCode){
             case 37:
-                if(currentShooterIndex % width !==0)
+                if(currentShooterIndex % width !==0){
                     currentShooterIndex--
                     break
+                }
             case 39:
-                if(currentShooterIndex % width < width -1) 
+                if(currentShooterIndex % width < width -1){ 
                     currentShooterIndex++
                     break
+                }
         }
         squares[currentShooterIndex].classList.add('shooter')
     }
@@ -40,8 +42,86 @@ document.addEventListener('DOMContentLoaded', ()=>{
     //move the alien invaders
     function moveInvaders()
     {
-        const leftEdge = alienInvaders[0] % width ===0        
-        const rightEdge = alienInvaders[alienInvaders.length -1] % width === width -1
-    }
+        const leftEdge = alienInvaders[0] % width === 0        
+        const rightEdge = alienInvaders[alienInvaders.length -1] % width === width - 1
 
+        if((leftEdge && direction === -1) || (rightEdge && direction === 1)){
+            direction = width
+        }else if (direction === width){
+            if(leftEdge){ 
+                direction = 1
+            } else {
+                direction = -1
+            }
+        }
+        for(let i = 0; i <= alienInvaders.length-1; i++){
+            squares[alienInvaders[i]].classList.remove('invader')
+        }
+
+        for (let i = 0; i <= alienInvaders.length-1; i++){
+            alienInvaders[i] += direction;
+        }
+        for(let i = 0; i <= alienInvaders.length -1; i++){
+            if(!alienInvadersTakenDown.includes(i)){
+                squares[alienInvaders[i]].classList.add('invader')
+            }
+        }
+        //game over conclusion
+        if(squares[currentShooterIndex].classList.contains('invader','shooter')){
+            resultDisplay.textContent = 'Game Over'
+            squares[currentShooterIndex].classList.add('boom')
+            clearInterval(invaderId)
+        }
+
+        for(let i = 0; i <= alienInvaders.length -1; i++){
+            if(alienInvaders[i] > (squares.length - (width -1))){
+                resultDisplay.textContent ='Game Over'
+                clearInterval(invaderId)
+            }
+        }
+
+        if(alienInvadersTakenDown.length === alienInvaders.length){
+            resultDisplay.textContent = 'You WIN'
+            clearInterval(invaderId)
+        }
+    }
+    invaderId = setInterval(moveInvaders, 500)
+    
+    //shoot at aliens
+    function shoot(e){
+        let laserId
+        let currentLaserIndex = currentShooterIndex
+        // move the laser from the sooter to the alien Invader
+        function moveLaser(){
+            squares[currentLaserIndex].classList.remove('laser')
+            currentLaserIndex -= width
+            squares[currentLaserIndex].classList.add('laser')
+            if(squares[currentLaserIndex].classList.contains('invader')){
+                squares[currentLaserIndex].classList.remove('laser')
+                squares[currentLaserIndex].classList.remove('invader')
+                squares[currentLaserIndex].classList.add('boom')
+                setTimeout(() => {
+                    squares[currentLaserIndex].classList.remove('boom')
+                }, 250);
+                clearInterval(laserId)
+
+                const alienTakenDown = alienInvaders.indexOf(currentLaserIndex)
+                alienInvadersTakenDown.push(alienTakenDown)
+                result++
+                resultDisplay.textContent = result;
+            }
+
+            if(currentLaserIndex < width){
+                clearInterval(laserId)
+                setTimeout(() => squares[currentLaserIndex].classList.remove('laser'), 100)
+            }
+        }
+        switch(e.keyCode){
+            case 32:
+                laserId = setInterval(moveLaser, 100);
+                break;
+        }
+    }
+   
+     document.addEventListener('keyup', shoot)
 })
